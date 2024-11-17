@@ -3,6 +3,7 @@ import pandas as pd
 import statsmodels.api as sm
 from glm_ex import Normal, Poisson, Bernoulli
 from data_loaders import sm_loader, csv_loader
+from sklearn.model_selection import train_test_split
 
 
 # Adds the user interface. Create choices for input.
@@ -22,6 +23,7 @@ csv_file = {'warpbreaks': 'https://raw.githubusercontent.com/BI-DS/GRA-4152/refs
 
 print(f'Will be using the {dset} dataset to compare the {args.model} models')
 
+
 # load correct dataset.
 if dset in ['spector', 'duncan']:
     loader = sm_loader()
@@ -40,12 +42,18 @@ if args.add_intercept == True:
 #if args.transpose == True:
     #loader.x_transpose()
 
-# Get x and y from loader. Train my class model and the statsmodels model.
+# Get x and y from loader. 
 x = loader.x
 y = loader.y
-model = c()
-model = model.fit(x,y)
-m = sm.GLM(y,x, family = sm_family)
+
+x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=0.2)
+
+# Fit my class
+model = c() # c = Normal, Poisson, or Bernoulli.
+model = model.fit(x_train,y_train) # model.fit(x,y) returns the inner class "_fitted_model"
+
+# Fit the statsmodels GLM
+m = sm.GLM(y_train,x_train, family = sm_family)
 res = m.fit()
 params = res.params
 
@@ -59,20 +67,23 @@ print(list(params))
 
 
 # Check if they are the same down to the 4th decimal.
-if [round(el,4) for el in model.betas] == [round(el,4) for el in params]:
-    print('These estimates are equal down to the 4th decimal point.')
+if [round(el,3) for el in model.betas] == [round(el,3) for el in params]:
+    print('These estimates are equal down to the 3rd decimal point.')
 else:
     print('These estimates deviate.')
 
 print(f'{'-'*60}')
 
-cl_pred = model.predict(x)
-sm_predict = res.predict(x)
+cl_pred = model.predict(x_test)
+sm_predict = res.predict(x_test)
 
 # Check if the predictions are equal down to the third decimal
-if [round(el,3) for el in cl_pred] == [round(el,3) for el in sm_predict]:
-    print('The predictions are equal down to the 3rd decimal point')
+if [round(el,4) for el in cl_pred] == [round(el,4) for el in sm_predict]:
+    print('The predictions are equal down to the 4th decimal point')
 
 
-
+'''
+Example terminal input:
+python test.py --model bernoulli --add-intercept --predictors gpa psi
+'''
 

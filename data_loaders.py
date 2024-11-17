@@ -28,21 +28,11 @@ class loader:
         if exogenous_columns == 'all':
             self._X = self._data.drop(self._endog, axis = 1)
         else:
-            self._X = self._data.loc[:, exogenous_columns]
+            try:
+                self._X = self._data.loc[:, exogenous_columns]
+            except KeyError:
+                self._X = self._data.loc[:, [x.upper() for x in exogenous_columns]] 
         
-            
-    @property
-    def dataset(self):
-        return self._data
-    
-    @property
-    def x(self):
-        return self._X
-    
-    @property
-    def y(self):
-        return self._y
-    
     ## Transposes the x matrix
     #
     def x_transpose(self):
@@ -50,6 +40,7 @@ class loader:
         self._X = np.transpose(self._X)
     
     ## Adds a intercept to the data. Adds a whole row of ones.
+    #
     def add_intercept(self):
         assert isinstance(self._X, pd.DataFrame), 'Please assign endogenous and exogenous variables first'
         ones = [1] * len(self._X)
@@ -64,9 +55,21 @@ class loader:
         le = LabelEncoder()
         for col in cols:
             self._data[col] = le.fit_transform(self._data[col])
+    
+                
+    @property
+    def dataset(self):
+        return self._data
+    
+    @property
+    def x(self):
+        return self._X
+    
+    @property
+    def y(self):
+        return self._y
         
         
-
 
 class sm_loader(loader):
     def __init__(self):
@@ -86,9 +89,7 @@ class sm_loader(loader):
         self._data = loaded.data
         self._encode_labels()
         
-        
-
-
+    
 
 class csv_loader(loader):
     def __init__(self):
@@ -98,7 +99,7 @@ class csv_loader(loader):
     # @params path: the path to the csv file, either local path or http path.
     def load_data(self, path):
         self._data = pd.read_csv(path)
-        self._endog = 'breaks'
+        self._endog = 'breaks' # because only csv i have enabled is the 'warpbreaks'
         self._encode_labels()
 
 
